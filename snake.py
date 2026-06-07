@@ -18,58 +18,58 @@ class Segment:
 
 class Snake:
     def __init__(self, x, y, rozmiar_bloku=20):
-        self.cialo = [Segment(x, y), Segment(x - rozmiar_bloku, y)]
-        self.kierunek = Direction.RIGHT 
+        self.body = [Segment(x, y), Segment(x - rozmiar_bloku, y)]
+        self.direction = Direction.RIGHT 
         self.rozmiar_bloku = rozmiar_bloku
-        self.wynik = 0
-        self.predkosc = 10
+        self.score = 0
+        self.speed = 10
 
     @property
     def glowa(self):
-        return self.cialo[0]
+        return self.body[0]
 
-    def sterowanie(self):
+    def move(self):
         nowy_x, nowy_y = self.glowa.x, self.glowa.y
-        if self.kierunek == Direction.UP:
+        if self.direction == Direction.UP:
             nowy_y -= self.rozmiar_bloku
-        elif self.kierunek == Direction.DOWN:
+        elif self.direction == Direction.DOWN:
             nowy_y += self.rozmiar_bloku
-        elif self.kierunek == Direction.LEFT:
+        elif self.direction == Direction.LEFT:
             nowy_x -= self.rozmiar_bloku
-        elif self.kierunek == Direction.RIGHT:
+        elif self.direction == Direction.RIGHT:
             nowy_x += self.rozmiar_bloku
 
-        self.cialo.insert(0, Segment(nowy_x, nowy_y))
-        self.cialo.pop()
+        self.body.insert(0, Segment(nowy_x, nowy_y))
+        self.body.pop()
 
-    def rosnij(self, bonus_predkosci):
+    def grow(self, bonus_predkosci):
         nowy_x, nowy_y = self.glowa.x, self.glowa.y
 
-        if self.kierunek == Direction.UP:
+        if self.direction == Direction.UP:
             nowy_y -= self.rozmiar_bloku
-        elif self.kierunek == Direction.DOWN:
+        elif self.direction == Direction.DOWN:
             nowy_y += self.rozmiar_bloku
-        elif self.kierunek == Direction.LEFT:
+        elif self.direction == Direction.LEFT:
             nowy_x -= self.rozmiar_bloku
-        elif self.kierunek == Direction.RIGHT:
+        elif self.direction == Direction.RIGHT:
             nowy_x += self.rozmiar_bloku
 
-        self.cialo.insert(0, Segment(nowy_x, nowy_y))
-        self.wynik += 1
-        self.predkosc += bonus_predkosci
+        self.body.insert(0, Segment(nowy_x, nowy_y))
+        self.score += 1
+        self.speed += bonus_predkosci
 
     def zmien_kierunek(self, nowy_kierunek):
-        if nowy_kierunek == Direction.UP and self.kierunek != Direction.DOWN:
-            self.kierunek = nowy_kierunek
-        elif nowy_kierunek == Direction.DOWN and self.kierunek != Direction.UP:
-            self.kierunek = nowy_kierunek
-        elif nowy_kierunek == Direction.LEFT and self.kierunek != Direction.RIGHT:
-            self.kierunek = nowy_kierunek
-        elif nowy_kierunek == Direction.RIGHT and self.kierunek != Direction.LEFT:
-            self.kierunek = nowy_kierunek
+        if nowy_kierunek == Direction.UP and self.direction != Direction.DOWN:
+            self.direction = nowy_kierunek
+        elif nowy_kierunek == Direction.DOWN and self.direction != Direction.UP:
+            self.direction = nowy_kierunek
+        elif nowy_kierunek == Direction.LEFT and self.direction != Direction.RIGHT:
+            self.direction = nowy_kierunek
+        elif nowy_kierunek == Direction.RIGHT and self.direction != Direction.LEFT:
+            self.direction = nowy_kierunek
 
     def checkSelfHit(self):
-        return self.glowa in self.cialo[1:]
+        return self.glowa in self.body[1:]
 
 
 class InputHandler:
