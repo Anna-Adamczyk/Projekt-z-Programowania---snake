@@ -76,9 +76,18 @@ class Board:
     def init_display(self, canvas):
         matrix = self.drawBoard()
         """Buduje graficzną siatkę planszy wewnątrz okna gry"""
-        grid = QGridLayout()
-        grid.setSpacing(0)
-
+        
+        if canvas.layout() is None:
+            grid = QGridLayout()
+            grid.setSpacing(0)
+            canvas.setLayout(grid)
+        else:
+            grid = canvas.layout()
+            #Przed nową grą pozbywamy się starych ścian
+            while grid.count():
+                item = grid.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
         theme = canvas.parent.get_theme()
 
         for y in range(self.height):
