@@ -4,7 +4,9 @@ from PyQt5.QtWidgets import (
     QVBoxLayout, QComboBox, QCheckBox,
     QStackedLayout
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
+from board import Board, Difficulty, BoardShape
+from snake import Snake, Direction, InputHandler
 
 
 # ================= GAME CANVAS =================
@@ -13,6 +15,93 @@ class GameCanvas(QWidget):
         super().__init__()
         self.parent = parent
         self.setFixedSize(650, 420)
+
+        self.setFocusPolicy(Qt.StrongFocus)
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.game_loop)
+
+        self.board = None
+        self.snakes = []
+        self.difficulty = None
+        self.is_running = False
+
+        klawisze_gracza = {
+            Qt.Key_W: Direction.UP,
+            Qt.Key_S: Direction.DOWN,
+            Qt.Key_A: Direction.LEFT,
+            Qt.Key_D: Direction.RIGHT
+        }
+        self.input_handler = InputHandler(klawisze_gracza)
+
+    def startGame(self):
+        self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=BoardShape.ARENA)
+        self.board = Board(20, 20, self.difficulty)
+        self.snakes = [Snake(10, 10, color=self.parent.skin)]
+        self.board.init_display(self)
+        self.is_running = True
+        self.timer.start(self.difficulty.getSpeed())
+        self.setFocus()
+
+    def keyPressEvent(self, event):
+        self.input_handler.readInput(event.key())
+        self.input_handler.sendDirection(self.snakes)
+
+    def game_loop(self):
+        if not self.snakes:
+            return 
+        waz = self.snakes[0]
+        waz.move()
+        self.checkCollision()
+        self.render_game()
+        self.parent.hud.setText(f"SCORE: {waz.score}")
+
+    def render_game(self):
+        if not self.board or not self.snakes or not self.layout():
+            return
+            
+        theme = self.parent.get_theme()
+        matrix = self.board.drawBoard()
+        grid = self.layout()  
+        for y in range(self.board.height):
+            for x in range(self.board.width):
+                item = grid.itemAtPosition(y, x)
+                if item and item.widget():
+                    tile = item.widget()
+                    if self.board.is_obstacle(x, y):
+                        tile.setStyleSheet("background-color: #1c2331; border: 1px solid #2b364a;")
+                    elif matrix[y][x] == "TILE_A":
+                        tile.setStyleSheet(f"background-color: {theme['bg']};")
+                    else:
+                        tile.setStyleSheet(f"background-color: {theme['bg']}; border: 1px solid rgba(0, 0, 0, 0.4);")
+        
+        waz = self.snakes[0]
+        for i, segment in enumerate(waz.body):
+            if 0 <= segment.x < self.board.width and 0 <= segment.y < self.board.height:
+                item = grid.itemAtPosition(segment.y, segment.x)
+                if item and item.widget():
+                    tile = item.widget()
+                    if i == 0:
+                        tile.setStyleSheet(f"background-color: {theme['snake']}; border: 2px solid #ffffff; border-radius: 4px;")
+                    else:
+                        tile.setStyleSheet(f"background-color: {theme['snake']}; border-radius: 2px;")
+
+    def checkCollision(self):
+        waz = self.snakes[0]
+        glowa = waz.glowa
+        
+        if self.board.is_obstacle(glowa.x, glowa.y):
+            if self.parent.wall_pass:
+                pass 
+            else:
+                self.endGame()
+                
+        if waz.checkSelfHit():
+            self.endGame()
+
+    def endGame(self):
+        self.timer.stop()
+        self.parent.hud.setText(f"GAME OVER! SCORE: {self.snakes[0].score}")
 
 # ================= MAIN APP =================
 class SnakeApp(QWidget):
@@ -222,8 +311,8 @@ class SnakeApp(QWidget):
         self.wall_pass = self.wall_cb.isChecked()
         self.skin = self.skin_box.currentText()
 
-        self.canvas.update()
         self.stack.setCurrentIndex(1)
+        self.canvas.startGame()
 
 
 # ================= RUN =================
