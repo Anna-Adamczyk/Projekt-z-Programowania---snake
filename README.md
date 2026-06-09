@@ -18,7 +18,7 @@ Snake Game jest grą napisaną w języku Python z wykorzystaniem biblioteki PyQt
 
 1. Sklonuj repozytorium:
 
-git clone [adres_repozytorium]
+git clone (https://github.com/Anna-Adamczyk/Projekt-z-Programowania---snake.git)
 
 2. Przejdź do katalogu projektu:
 
