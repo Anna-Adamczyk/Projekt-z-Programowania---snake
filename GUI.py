@@ -26,14 +26,33 @@ class GameCanvas(QWidget):
         self.difficulty = None
         self.is_running = False
         self.input_handler = InputHandler()
+        self.food_pos = None
+    def spawn_food(self):
+        import random
+        while True:
+            x = random.randint(1, self.board.width - 2)
+            y = random.randint(1, self.board.height - 2)
+            if not self.board.is_obstacle(x, y):
+                self.food_pos = (x, y)
+                break
 
     def startGame(self):
-        self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=BoardShape.ARENA)
+        #self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=BoardShape.ARENA)
+        wyksztalt = BoardShape[self.parent.chosen_board]
+        self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=wyksztalt) #tymczasowa podmiana dla wyboru planszy, żeby nie grzebać w kodzie
+
         self.board = Board(20, 20, self.difficulty)
         self.snakes = []
         # Gracz 1 
-        self.snakes.append(Snake(5, 10, player_id=1, color=self.parent.skin))
-        
+        #self.snakes.append(Snake(5, 10, player_id=1, color=self.parent.skin))
+        if self.parent.chosen_board == "MAZE":
+            start_x = 1
+            start_y = self.board.height - 2  # Dół planszy (zaraz nad ścianą)
+        else:
+            start_x = 5
+            start_y = 10  # Domyślny start dla innych plansz
+            
+        self.snakes.append(Snake(start_x, start_y, player_id=1, color=self.parent.skin))
         # Multiplayer 
         if self.parent.multi:
             kolor_g2 = "Fire" if self.parent.skin != "Fire" else "Ice"
@@ -43,6 +62,7 @@ class GameCanvas(QWidget):
         self.is_running = True
         self.timer.start(self.difficulty.getSpeed())
         self.setFocus()
+        self.spawn_food()
 
     def keyPressEvent(self, event):
         klawisz = event.key()
@@ -84,6 +104,9 @@ class GameCanvas(QWidget):
                 glowa.y = nastepny_y
 
             waz.move()
+            if (waz.glowa.x, waz.glowa.y) == self.food_pos:
+                waz.grow()
+                self.spawn_food()
 
         self.checkCollision()
         self.render_game()
@@ -132,7 +155,9 @@ class GameCanvas(QWidget):
                 item = grid.itemAtPosition(y, x)
                 if item and item.widget():
                     tile = item.widget()
-                    if self.board.is_obstacle(x, y):
+                    if (x, y) == self.food_pos:
+                        tile.setStyleSheet(f"background-color: {theme['food']}; border-radius: 4px;")
+                    elif self.board.is_obstacle(x, y):
                         tile.setStyleSheet("background-color: #1c2331; border: 1px solid #2b364a;")
                     elif matrix[y][x] == "TILE_A":
                         tile.setStyleSheet(f"background-color: {theme['bg']};")
@@ -284,6 +309,16 @@ class SnakeApp(QWidget):
         """)
         layout.addWidget(self.skin_box)
 
+        self.board_box = QComboBox()  #tymczasowy wybór planszy
+        self.board_box.addItems(["ARENA", "RECTANGLE", "MAZE"])
+        self.board_box.setStyleSheet("""
+            background:#21262d;
+            color:white;
+            padding:6px;
+            border-radius:6px;
+            margin-top:5px;
+        """)
+        layout.addWidget(self.board_box)
         # BUTTONS
         play = QPushButton("▶ GRAJ")
         info = QPushButton("📖 INSTRUKCJA")
@@ -408,6 +443,8 @@ class SnakeApp(QWidget):
         self.wall_pass = self.wall_cb.isChecked()
         self.skin = self.skin_box.currentText()
 
+        self.chosen_board = self.board_box.currentText() #tymczasowy wybór planszy
+
         self.stack.setCurrentIndex(1)
         self.canvas.startGame()
 
@@ -418,3 +455,4 @@ if __name__ == "__main__":
     window = SnakeApp()
     window.show()
     sys.exit(app.exec_())
+
