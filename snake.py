@@ -1,10 +1,26 @@
 from enum import Enum
-
+from PyQt5.QtCore import Qt
 class Direction(Enum):
     UP = 1
     DOWN = 2
     LEFT = 3
     RIGHT = 4
+
+    
+STEROWANIE_G1= {
+    Qt.Key_W: Direction.UP,
+    Qt.Key_S: Direction.DOWN,
+    Qt.Key_A: Direction.LEFT,
+    Qt.Key_D: Direction.RIGHT
+}
+
+
+STEROWANIE_G2 = {
+    Qt.Key_Up: Direction.UP,
+    Qt.Key_Down: Direction.DOWN,
+    Qt.Key_Left: Direction.LEFT,
+    Qt.Key_Right: Direction.RIGHT
+}
 
 class Segment:
     def __init__(self, x: int, y: int):
@@ -21,8 +37,12 @@ class Segment:
 
 class Snake:
     def __init__(self, x: int, y: int, player_id: int = 1, color: str = "Neon"):
-        self.body = [Segment(x, y), Segment(x - 1, y)]
-        self.direction = Direction.RIGHT
+        self.direction = Direction.RIGHT if player_id == 1 else Direction.LEFT
+        
+        if self.direction == Direction.RIGHT:
+            self.body = [Segment(x, y), Segment(x - 1, y)]
+        else:
+            self.body = [Segment(x, y), Segment(x + 1, y)]
         self.score = 0
         self.speed = 10
         self.color = color
@@ -87,16 +107,17 @@ class Snake:
         self.boostDuration = 0
 
 class InputHandler:
-    def __init__(self, mapping: dict):
-        self.klawisze = mapping
-        self.keyPressed = None
+    def __init__(self):
+        self.uklady = {
+            1: STEROWANIE_G1,        
+            2: STEROWANIE_G2
+        }
 
-    def readInput(self, event_key):
-        if event_key in self.klawisze:
-            self.keyPressed = self.klawisze[event_key]
-        else:
-            self.keyPressed = None
-
-    def sendDirection(self, snakes: list):
-        if self.keyPressed and len(snakes) > 0:
-            snakes[0].zmien_kierunek(self.keyPressed)
+    def readAndSendInput(self, event_key, snakes: list):
+        for player_id, klawisze in self.uklady.items():
+            if event_key in klawisze:
+                nowy_kierunek = klawisze[event_key]
+                for waz in snakes:
+                    if waz.playerId == player_id:
+                        waz.zmien_kierunek(nowy_kierunek)
+                        return

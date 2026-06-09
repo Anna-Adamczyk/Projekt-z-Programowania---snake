@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QVBoxLayout, QComboBox, QCheckBox,
-    QStackedLayout
+    QStackedLayout, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer
 from board import Board, Difficulty, BoardShape
@@ -25,36 +25,100 @@ class GameCanvas(QWidget):
         self.snakes = []
         self.difficulty = None
         self.is_running = False
-
-        klawisze_gracza = {
-            Qt.Key_W: Direction.UP,
-            Qt.Key_S: Direction.DOWN,
-            Qt.Key_A: Direction.LEFT,
-            Qt.Key_D: Direction.RIGHT
-        }
-        self.input_handler = InputHandler(klawisze_gracza)
+        self.input_handler = InputHandler()
 
     def startGame(self):
         self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=BoardShape.ARENA)
         self.board = Board(20, 20, self.difficulty)
-        self.snakes = [Snake(10, 10, color=self.parent.skin)]
+        self.snakes = []
+        # Gracz 1 
+        self.snakes.append(Snake(5, 10, player_id=1, color=self.parent.skin))
+        
+        # Multiplayer 
+        if self.parent.multi:
+            kolor_g2 = "Fire" if self.parent.skin != "Fire" else "Ice"
+            self.snakes.append(Snake(14, 10, player_id=2, color=kolor_g2))
+
         self.board.init_display(self)
         self.is_running = True
         self.timer.start(self.difficulty.getSpeed())
         self.setFocus()
 
     def keyPressEvent(self, event):
-        self.input_handler.readInput(event.key())
-        self.input_handler.sendDirection(self.snakes)
+        klawisz = event.key()
+        if not self.parent.multi:
+            strzalki = {
+                Qt.Key_Up: Direction.UP,
+                Qt.Key_Down: Direction.DOWN,
+                Qt.Key_Left: Direction.LEFT,
+                Qt.Key_Right: Direction.RIGHT
+            }
+            if klawisz in strzalki:
+                self.snakes[0].zmien_kierunek(strzalki[klawisz])
+                return
+        self.input_handler.readAndSendInput(klawisz, self.snakes)
 
     def game_loop(self):
         if not self.snakes:
             return 
-        waz = self.snakes[0]
-        waz.move()
+        for waz in self.snakes:
+            glowa = waz.glowa
+            nastepny_x, nastepny_y = glowa.x, glowa.y
+
+            if waz.direction == Direction.UP:
+                nastepny_y -= 1
+            elif waz.direction == Direction.DOWN:
+                nastepny_y += 1
+            elif waz.direction == Direction.LEFT:
+                nastepny_x -= 1
+            elif waz.direction == Direction.RIGHT:
+                nastepny_x += 1
+                
+            if self.parent.wall_pass:
+                if nastepny_x < 0: nastepny_x = self.board.width - 1
+                elif nastepny_x >= self.board.width: nastepny_x = 0 
+                if nastepny_y < 0: nastepny_y = self.board.height - 1
+                elif nastepny_y >= self.board.height: nastepny_y = 0
+
+                glowa.x = nastepny_x
+                glowa.y = nastepny_y
+
+            waz.move()
+
         self.checkCollision()
         self.render_game()
-        self.parent.hud.setText(f"SCORE: {waz.score}")
+        
+       
+        if len(self.snakes) == 2:
+            self.parent.hud.setText(f"G1 SCORE: {self.snakes[0].score}  |  G2 SCORE: {self.snakes[1].score}")
+        else:
+            self.parent.hud.setText(f"SCORE: {self.snakes[0].score}")
+
+    def checkCollision(self):
+        for waz in self.snakes:
+            glowa = waz.glowa
+            
+            if not self.parent.wall_pass:
+                if glowa.x < 0 or glowa.x >= self.board.width or glowa.y < 0 or glowa.y >= self.board.height:
+                    self.endGame(przegrany_id=waz.playerId)
+                    return
+        
+                if self.board.is_obstacle(glowa.x, glowa.y):
+                    self.endGame(przegrany_id=waz.playerId)
+                    return
+             
+            # Samozderzenie
+            if waz.checkSelfHit():
+                self.endGame(przegrany_id=waz.playerId)
+                return
+
+            # Zderzenie z drugim wężem (wjechanie w czyjś ogon/ciało)
+            for inny_waz in self.snakes:
+                if waz == inny_waz:
+                    continue
+                if glowa in inny_waz.body:
+                    self.endGame(przegrany_id=waz.playerId)
+                    return
 
     def render_game(self):
         if not self.board or not self.snakes or not self.layout():
@@ -75,33 +139,66 @@ class GameCanvas(QWidget):
                     else:
                         tile.setStyleSheet(f"background-color: {theme['bg']}; border: 1px solid rgba(0, 0, 0, 0.4);")
         
-        waz = self.snakes[0]
-        for i, segment in enumerate(waz.body):
-            if 0 <= segment.x < self.board.width and 0 <= segment.y < self.board.height:
-                item = grid.itemAtPosition(segment.y, segment.x)
-                if item and item.widget():
-                    tile = item.widget()
-                    if i == 0:
-                        tile.setStyleSheet(f"background-color: {theme['snake']}; border: 2px solid #ffffff; border-radius: 4px;")
-                    else:
-                        tile.setStyleSheet(f"background-color: {theme['snake']}; border-radius: 2px;")
+        for waz in self.snakes:
+            if waz.color == "Neon": kolor_hex = "#00ff9f"
+            elif waz.color == "Fire": kolor_hex = "#ff4d00"
+            else: kolor_hex = "#00d4ff" # Ice
+            
+            for i, segment in enumerate(waz.body):
+                if 0 <= segment.x < self.board.width and 0 <= segment.y < self.board.height:
+                    item = grid.itemAtPosition(segment.y, segment.x)
+                    if item and item.widget():
+                        tile = item.widget()
+                        if i == 0:
+                            tile.setStyleSheet(f"background-color: {kolor_hex}; border: 2px solid #ffffff; border-radius: 4px;")
+                        else:
+                            tile.setStyleSheet(f"background-color: {kolor_hex}; border-radius: 2px;")
 
-    def checkCollision(self):
-        waz = self.snakes[0]
-        glowa = waz.glowa
-        
-        if self.board.is_obstacle(glowa.x, glowa.y):
-            if self.parent.wall_pass:
-                pass 
-            else:
-                self.endGame()
-                
-        if waz.checkSelfHit():
-            self.endGame()
-
-    def endGame(self):
+   
+    def endGame(self, przegrany_id=1):
         self.timer.stop()
-        self.parent.hud.setText(f"GAME OVER! SCORE: {self.snakes[0].score}")
+        self.is_running = False
+        
+        if len(self.snakes) == 2:
+            
+            wygrany_id = 2 if przegrany_id == 1 else 1
+            tekst = f" WYGRYWA GRACZ {wygrany_id}! \n\nGratulacje dla zwycięzcy!"
+        else:
+            
+            wynik = self.snakes[0].score if self.snakes else 0
+            tekst = f"Przegrana!\n\nTwój końcowy wynik to: {wynik} "
+
+        szablon_baneru= """
+            QMessageBox {
+                background-color: #1c2331;
+                border: 2px solid #2b364a;
+            }
+            QLabel {
+                color: #ffffff;
+                font-size: 14px;
+            }
+            QPushButton {
+                background-color: #238636;
+                color: white;
+                font-weight: bold;
+                padding: 6px;
+                border-radius: 5px;
+                min-width: 80px;
+            }
+            QPushButton:hover {
+                background-color: #2ea043;
+            }
+        """
+        
+        box = QMessageBox(self)
+        box.setWindowTitle("Koniec Gry 🐍")
+        box.setText(tekst)
+        box.setIcon(QMessageBox.Information)
+        box.setStyleSheet(szablon_baneru)
+        box.exec_() 
+        
+        
+        self.parent.stack.setCurrentIndex(0)
 
 # ================= MAIN APP =================
 class SnakeApp(QWidget):
