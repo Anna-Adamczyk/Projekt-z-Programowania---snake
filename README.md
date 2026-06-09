@@ -10,9 +10,16 @@ Projekt został wykonany w ramach zajęć z programowania.
 Snake Game jest grą napisaną w języku Python z wykorzystaniem biblioteki PyQt5. Gracz steruje wężem poruszającym się po planszy i zdobywa punkty poprzez zbieranie owoców. Gra obsługuje tryb jednoosobowy oraz wieloosobowy.
 
 ## Wymagania
+python 
+## Wymagane biblioteki
 
-* Python 3.x
-* PyQt5
+Biblioteki zewnętrzne:
+- PyQt5
+
+Biblioteki standardowe Pythona:
+- sys
+- random
+- enum
 
 ## Instalacja
 
@@ -42,27 +49,57 @@ pip install PyQt5
 
 python GUI.py
 
+## Cel gry
+
+Celem gry jest zdobycie jak największej liczby punktów poprzez zbieranie owoców pojawiających się na planszy. Każdy zjedzony owoc powoduje wzrost długości węża oraz zwiększenie wyniku.
+
+## Rozpoczęcie gry
+Uruchom program.
+W menu głównym wybierz:
+tryb jednoosobowy lub multiplayer,
+skórkę węża,
+typ planszy,
+dodatkowe opcje gry.
+Kliknij przycisk „GRAJ”.
 ## Sterowanie
-
-### Gracz 1
-
-* W – góra
-* S – dół
-* A – lewo
-* D – prawo
-
-### Gracz 2
-
-* Strzałka w górę
-* Strzałka w dół
-* Strzałka w lewo
-* Strzałka w prawo
-
+Gracz 1
+W – ruch w górę
+S – ruch w dół
+A – ruch w lewo
+D – ruch w prawo
+Gracz 2 (tryb multiplayer)
+↑ – ruch w górę
+↓ – ruch w dół
+← – ruch w lewo
+→ – ruch w prawo
 ## Dostępne opcje
+## Multiplayer
 
-* Multiplayer
-* Magiczne owoce
-* Wall Pass
-* Wybór skórki
-* Wybór planszy
+Umożliwia rozgrywkę dla dwóch graczy na jednej planszy.
 
+## Magiczne owoce
+
+Włącza możliwość pojawiania się specjalnych owoców zapewniających dodatkowe bonusy.
+
+## Wall Pass
+
+Pozwala przechodzić przez krawędzie planszy. Po opuszczeniu planszy z jednej strony wąż pojawia się po stronie przeciwnej.
+
+## Wybór planszy
+
+Dostępne są trzy rodzaje plansz:
+
+Arena
+Rectangle
+Maze
+Zasady przegranej
+
+## Gra kończy się, gdy:
+
+wąż uderzy w ścianę (jeśli opcja Wall Pass jest wyłączona),
+wąż uderzy w przeszkodę,
+wąż zderzy się z własnym ciałem,
+w trybie multiplayer wąż zderzy się z drugim graczem.
+## Punktacja
+
+Za każdy zjedzony owoc gracz otrzymuje punkt. Aktualny wynik jest wyświetlany podczas rozgrywki na górze okna gry.
