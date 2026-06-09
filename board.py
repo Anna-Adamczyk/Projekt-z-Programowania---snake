@@ -65,11 +65,11 @@ class Board:
                 self.obstacles.append((self.width - 3, y))         
 
             # 2. Krótsze pionowe linie (5 kratek od brzegu)
-            for y in range(8, 12):
+            for y in range(11, 15):
                 self.obstacles.append((6, y))             
                 self.obstacles.append((self.width - 7, y))
             # 3. Pozioma kreska
-            for x in range(6, self.width - 6):
+            for x in range(8, self.width - 6):
                 self.obstacles.append((x, jedna_trzecia_y))
     def is_obstacle(self, x:int, y:int) -> bool:
         return (x,y) in self.obstacles
@@ -104,4 +104,5 @@ class Board:
                 tile = QLabel("")
                 tile.setStyleSheet(style)
                 grid.addWidget(tile, y, x)
-        canvas.setLayout(grid)
+        if canvas.layout() is None:
+            canvas.setLayout(grid)
