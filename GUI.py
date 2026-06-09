@@ -27,14 +27,16 @@ class GameCanvas(QWidget):
         self.difficulty = None
         self.is_running = False
         self.input_handler = InputHandler()
-        self.food_pos = None
+        self.food = None
+        self.magic_fruit = None
     def spawn_food(self):
         import random
         while True:
             x = random.randint(1, self.board.width - 2)
             y = random.randint(1, self.board.height - 2)
             if not self.board.is_obstacle(x, y):
-                self.food_pos = (x, y)
+                self.food.x = x
+                self.food.y = y
                 break
 
     def startGame(self):
@@ -63,7 +65,12 @@ class GameCanvas(QWidget):
         self.is_running = True
         self.timer.start(self.difficulty.getSpeed())
         self.setFocus()
-        self.spawn_food()
+
+        self.food = Food()
+        self.food.spawn(self.board)
+
+        self.magic_fruit = MagicFruit()
+        self.magic_fruit.spawn(self.board)
 
     def keyPressEvent(self, event):
         klawisz = event.key()
@@ -105,9 +112,13 @@ class GameCanvas(QWidget):
                 glowa.y = nastepny_y
 
             waz.move()
-            if (waz.glowa.x, waz.glowa.y) == self.food_pos:
+            if (waz.glowa.x, waz.glowa.y) == self.food.getPosition():
                 waz.grow()
-                self.spawn_food()
+                self.food.spawn(self.board)
+            if (waz.glowa.x, waz.glowa.y) == self.magic_fruit.getPosition():
+              self.magic_fruit.applyEffect(waz)
+              self.timer.setInterval(max(50, self.timer.interval() - 20))
+              self.magic_fruit.spawn(self.board)
 
         self.checkCollision()
         self.render_game()
@@ -156,14 +167,22 @@ class GameCanvas(QWidget):
                 item = grid.itemAtPosition(y, x)
                 if item and item.widget():
                     tile = item.widget()
-                    if (x, y) == self.food_pos:
-                        tile.setStyleSheet(f"background-color: {theme['food']}; border-radius: 4px;")
-                    elif self.board.is_obstacle(x, y):
-                        tile.setStyleSheet("background-color: #1c2331; border: 1px solid #2b364a;")
-                    elif matrix[y][x] == "TILE_A":
-                        tile.setStyleSheet(f"background-color: {theme['bg']};")
-                    else:
-                        tile.setStyleSheet(f"background-color: {theme['bg']}; border: 1px solid rgba(0, 0, 0, 0.4);")
+                if self.magic_fruit and (x, y) == self.magic_fruit.getPosition():
+                    tile.setStyleSheet(
+                    f"background-color: {theme['magic']}; border-radius: 4px;" )
+                elif (x, y) == self.food.getPosition():
+                   tile.setStyleSheet(
+        f"background-color: {theme['food']}; border-radius: 4px;")
+                elif self.board.is_obstacle(x, y):
+                  tile.setStyleSheet(
+        "background-color: #1c2331; border: 1px solid #2b364a;" )
+                elif matrix[y][x] == "TILE_A":
+                 tile.setStyleSheet(f"background-color: {theme['bg']};")
+                else:
+                  tile.setStyleSheet(
+                   f"background-color: {theme['bg']}; border: 1px solid rgba(0, 0, 0, 0.4);")
+                        
+                  
         
         for waz in self.snakes:
             if waz.color == "Neon": kolor_hex = "#00ff9f"

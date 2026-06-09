@@ -1,4 +1,5 @@
 from random import randint
+"""Podstawowy owoc zwiększający wynik gracza."""
 class Food:
     def __init__(self, x=0, y=0, points=1):
         self.x = x
@@ -18,7 +19,7 @@ class Food:
                 self.y = y
                 break
 
-
+"""Specjalny owoc aktywujący przyspieszenie węża."""
 class MagicFruit(Food):
     def __init__(self, x=0, y=0):
         super().__init__(x, y, points=3)
