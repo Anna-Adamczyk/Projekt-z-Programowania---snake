@@ -70,8 +70,11 @@ class GameCanvas(QWidget):
         self.food = Food()
         self.food.spawn(self.board)
 
-        self.magic_fruit = MagicFruit()
-        self.magic_fruit.spawn(self.board)
+        if self.parent.magic:
+          self.magic_fruit = MagicFruit()
+          self.magic_fruit.spawn(self.board)
+        else:
+          self.magic_fruit = None
 
     def keyPressEvent(self, event):
         klawisz = event.key()
