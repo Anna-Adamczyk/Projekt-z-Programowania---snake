@@ -21,7 +21,7 @@ Biblioteki standardowe Pythona:
 - random
 - enum
 
-## Instalacja
+## Instalacja(wpisz w terminalu)
 
 1. Sklonuj repozytorium:
 
@@ -45,7 +45,7 @@ source venv/Scripts/activate
 
 pip install PyQt5
 
-## Uruchomienie
+6.Urochomienie
 
 python GUI.py
 
