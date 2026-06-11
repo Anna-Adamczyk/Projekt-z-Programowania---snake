@@ -29,6 +29,7 @@ class GameCanvas(QWidget):
         self.input_handler = InputHandler()
         self.food = None
         self.magic_fruit = None
+        self.normal_speed = 150
     def spawn_food(self):
         import random
         while True:
@@ -63,7 +64,7 @@ class GameCanvas(QWidget):
 
         self.board.init_display(self)
         self.is_running = True
-        self.timer.start(self.difficulty.getSpeed())
+        self.timer.start(self.normal_speed)
         self.setFocus()
 
         self.food = Food()
@@ -115,10 +116,14 @@ class GameCanvas(QWidget):
             if (waz.glowa.x, waz.glowa.y) == self.food.getPosition():
                 waz.grow()
                 self.food.spawn(self.board)
-            if (waz.glowa.x, waz.glowa.y) == self.magic_fruit.getPosition():
-              self.magic_fruit.applyEffect(waz)
-              self.timer.setInterval(max(50, self.timer.interval() - 20))
-              self.magic_fruit.spawn(self.board)
+            if self.magic_fruit and (waz.glowa.x, waz.glowa.y) == self.magic_fruit.getPosition():
+               self.magic_fruit.applyEffect(waz)
+               self.timer.setInterval(80)
+               QTimer.singleShot(
+                   self.magic_fruit.boostTime * 1000,
+                   lambda: self.timer.setInterval(self.normal_speed)
+                )
+               self.magic_fruit.spawn(self.board)
 
         self.checkCollision()
         self.render_game()
