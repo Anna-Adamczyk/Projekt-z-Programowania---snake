@@ -1,4 +1,5 @@
 import sys
+import random
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QVBoxLayout, QComboBox, QCheckBox,
@@ -10,8 +11,11 @@ from snake import Snake, Direction, InputHandler
 from fruit import Food, MagicFruit
 
 
+
 # ================= GAME CANVAS =================
 class GameCanvas(QWidget):
+    """"Obsługa gry (planszy, węży, owoców, ulepszeń)"""
+
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
@@ -25,13 +29,15 @@ class GameCanvas(QWidget):
         self.board = None
         self.snakes = []
         self.difficulty = None
-        self.is_running = False
+        #self.is_running = False
         self.input_handler = InputHandler()
         self.food = None
         self.magic_fruit = None
         self.normal_speed = 150
+
     def spawn_food(self):
-        import random
+        """Odpowiada za generowanie owoców."""
+
         while True:
             x = random.randint(1, self.board.width - 2)
             y = random.randint(1, self.board.height - 2)
@@ -41,6 +47,7 @@ class GameCanvas(QWidget):
                 break
 
     def startGame(self):
+        """Rozpoczyna grę."""
         #self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=BoardShape.ARENA)
         wyksztalt = BoardShape[self.parent.chosen_board]
         self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=wyksztalt) #tymczasowa podmiana dla wyboru planszy, żeby nie grzebać w kodzie
@@ -63,7 +70,7 @@ class GameCanvas(QWidget):
             self.snakes.append(Snake(14, 10, player_id=2, color=kolor_g2))
 
         self.board.init_display(self)
-        self.is_running = True
+        #self.is_running = True
         self.timer.start(self.normal_speed)
         self.setFocus()
 
@@ -77,6 +84,8 @@ class GameCanvas(QWidget):
           self.magic_fruit = None
 
     def keyPressEvent(self, event):
+        """Odpowiada za obsługę ruchu."""
+
         klawisz = event.key()
         if not self.parent.multi:
             strzalki = {
@@ -91,6 +100,8 @@ class GameCanvas(QWidget):
         self.input_handler.readAndSendInput(klawisz, self.snakes)
 
     def game_loop(self):
+        """Wykonuje raz główną pętlę gry."""
+
         if not self.snakes:
             return 
         for waz in self.snakes:
@@ -138,6 +149,8 @@ class GameCanvas(QWidget):
             self.parent.hud.setText(f"SCORE: {self.snakes[0].score}")
 
     def checkCollision(self):
+        """Sprawdza czy doszło do zderzenia."""
+
         for waz in self.snakes:
             glowa = waz.glowa
             
@@ -164,6 +177,8 @@ class GameCanvas(QWidget):
                     return
 
     def render_game(self):
+        """Odświeża wygląd planszy i wszystkich obiektów."""
+
         if not self.board or not self.snakes or not self.layout():
             return
             
@@ -209,8 +224,10 @@ class GameCanvas(QWidget):
 
    
     def endGame(self, przegrany_id=1):
+        """Kończy rozgrywkę i wyświetla ile zdobyto punktów."""
+
         self.timer.stop()
-        self.is_running = False
+        #self.is_running = False
         
         if len(self.snakes) == 2:
             
@@ -255,10 +272,12 @@ class GameCanvas(QWidget):
 
 # ================= MAIN APP =================
 class SnakeApp(QWidget):
+    """Główne okno aplikacji Snake."""
+
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("🐍 Snake - Final PyQt5 Edition")
+        self.setWindowTitle("🐍 Snake - Wersja z ulepszeniami")
         self.setFixedSize(800, 680)
         self.setStyleSheet("background-color:#0d1117;")
 
@@ -278,8 +297,20 @@ class SnakeApp(QWidget):
 
         self.stack.setCurrentIndex(0)
 
+    def button_style(self):
+        """Określa wygląd przycisku."""
+        return """
+            background:#238636;
+            color:white;
+            padding:10px;
+            border-radius:10px;
+            font-weight:bold;
+        """
+
     # ================= THEMES =================
     def get_theme(self):
+        """Ustala wariant kolorystyczny rozgrywki."""
+
         if self.skin == "Neon":
             return {
                 "bg": "#050816",
@@ -308,6 +339,8 @@ class SnakeApp(QWidget):
 
     # ================= MENU =================
     def menu_ui(self):
+        """Określa wygląd menu."""
+
         page = QWidget()
         layout = QVBoxLayout()
 
@@ -347,7 +380,7 @@ class SnakeApp(QWidget):
             margin-top:5px;
         """)
         layout.addWidget(self.board_box)
-        # BUTTONS
+        
         play = QPushButton("▶ GRAJ")
         info = QPushButton("📖 INSTRUKCJA")
         authors = QPushButton("👨‍💻 OD AUTOREK")
@@ -376,6 +409,8 @@ class SnakeApp(QWidget):
 
     # ================= GAME =================
     def game_ui(self):
+        """Tworzy tło, na który wyświetla się gra."""
+
         page = QWidget()
         layout = QVBoxLayout()
 
@@ -403,21 +438,47 @@ class SnakeApp(QWidget):
 
     # ================= INFO =================
     def info_ui(self):
+        """Określa wygląd instrukcji."""
+
         page = QWidget()
         layout = QVBoxLayout()
 
+        title = QLabel("✨👨‍💻 INSTRUKCJA 👩‍💻✨")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("""
+            font-size:22px;
+            color:#c77dff;
+            font-weight:bold;
+        """)
+
         text = QLabel("""
-🐍 CEL: zbieraj owoce i rośnij
-🎮 WASD / strzałki
-🌀 Wall Pass = przechodzenie przez ściany
-🍇 Magiczne owoce = bonus
-🎨 3 skórki gracza
+    🐍 CEL: zbieraj owoce i rośnij
+    🎮 Sterowanie: WASD / strzałki
+                                
+    Dostępne Ulepszenia: 
+            🎮 Multiplayer = gra dla 2 osób
+            🍇 Magiczne owoce = zjedzenie magicznego owocu przyspiesza węża na kilka sekund
+            🌀 Wall Pass = przechodzenie przez ściany
+            🎨 3 warianty kolorystyczne (Neon, Fire, Ice)
+            🗺️ 3 kształty planszy (ARENA, RECTANGLE, MAZE)                    
 """)
-        text.setStyleSheet("color:white;")
+        text.setStyleSheet("""
+                    color:white;
+                    font-size: 17px
+                """)
 
         back = QPushButton("⬅ POWRÓT")
         back.clicked.connect(lambda: self.stack.setCurrentIndex(0))
 
+        back.setStyleSheet("""
+            background:#238636;
+            color:white;
+            padding:10px;
+            border-radius:10px;
+            font-weight:bold;
+        """)
+
+        layout.addWidget(title)
         layout.addWidget(text)
         layout.addWidget(back)
 
@@ -426,6 +487,8 @@ class SnakeApp(QWidget):
 
     # ================= AUTHORS =================
     def authors_ui(self):
+        """Określa wygląd zakładki "Od Autorek"."""
+
         page = QWidget()
         layout = QVBoxLayout()
 
@@ -438,13 +501,17 @@ class SnakeApp(QWidget):
         """)
 
         text = QLabel("""
-🎮 Snake PyQt Edition
-💡 UI + Game Prototype
-🚀 Projekt edukacyjny
+🎮 Snake z ulepszeniami
+💡 Multiplayer, Magiczne owoce, Wall Pass
+💡 3 Warianty kolorystyczne i 3 dostępne plansze                      
+🚀 Projekt na zaliczenie Programowania
 🐍 Dziękujemy za uruchomienie gry!
 """)
         text.setAlignment(Qt.AlignCenter)
-        text.setStyleSheet("color:white;")
+        text.setStyleSheet("""
+                    color:white;
+                    font-size: 17px
+                """)
 
         back = QPushButton("⬅ POWRÓT")
         back.clicked.connect(lambda: self.stack.setCurrentIndex(0))
@@ -466,6 +533,8 @@ class SnakeApp(QWidget):
 
     # ================= START GAME =================
     def start_game(self):
+        """Rozpoczyna rozgrywkę."""
+
         self.multi = self.multi_cb.isChecked()
         self.magic = self.magic_cb.isChecked()
         self.wall_pass = self.wall_cb.isChecked()
@@ -478,9 +547,9 @@ class SnakeApp(QWidget):
 
 
 # ================= RUN =================
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = SnakeApp()
-    window.show()
-    sys.exit(app.exec_())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = SnakeApp()
+#     window.show()
+#     sys.exit(app.exec_())
 
