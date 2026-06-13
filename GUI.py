@@ -55,13 +55,8 @@ class GameCanvas(QWidget):
         self.board = Board(20, 20, self.difficulty)
         self.snakes = []
         # Gracz 1 
-        #self.snakes.append(Snake(5, 10, player_id=1, color=self.parent.skin))
-        if self.parent.chosen_board == "MAZE":
-            start_x = 1
-            start_y = self.board.height - 2  # Dół planszy (zaraz nad ścianą)
-        else:
-            start_x = 5
-            start_y = 10  # Domyślny start dla innych plansz
+        start_x = 5
+        start_y = 10  # Domyślny start dla innych plansz
             
         self.snakes.append(Snake(start_x, start_y, player_id=1, color=self.parent.skin))
         # Multiplayer 
