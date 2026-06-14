@@ -1,7 +1,6 @@
-import sys
 import random
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLabel, QPushButton,
+    QWidget, QLabel, QPushButton,
     QVBoxLayout, QComboBox, QCheckBox,
     QStackedLayout, QMessageBox
 )
@@ -539,12 +538,3 @@ class SnakeApp(QWidget):
 
         self.stack.setCurrentIndex(1)
         self.canvas.startGame()
-
-
-# ================= RUN =================
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     window = SnakeApp()
-#     window.show()
-#     sys.exit(app.exec_())
-
