@@ -37,53 +37,34 @@ class Segment:
 
 class Snake:
     def __init__(self, x: int, y: int, player_id: int = 1, color: str = "Neon"):
-        self.direction = Direction.RIGHT if player_id == 1 else Direction.LEFT
+        self.direction = Direction.UP if player_id == 1 else Direction.DOWN
         
-        if self.direction == Direction.RIGHT:
-            self.body = [Segment(x, y), Segment(x - 1, y)]
+        if self.direction == Direction.UP:
+            self.body = [Segment(x, y), Segment(x, y + 1)]
         else:
-            self.body = [Segment(x, y), Segment(x + 1, y)]
+            self.body = [Segment(x, y), Segment(x, y - 1)]
         self.score = 0
         self.speed = 10
         self.color = color
         self.playerId = player_id
         self.boostActive = False
         self.boostDuration = 0
+        self.manualBoost = False
 
     @property
     def glowa(self):
         return self.body[0]
 
-    def move(self):
-        nowy_x, nowy_y = self.glowa.x, self.glowa.y
-        if self.direction == Direction.UP:
-            nowy_y -= 1
-        elif self.direction == Direction.DOWN:
-            nowy_y += 1
-        elif self.direction == Direction.LEFT:
-            nowy_x -= 1
-        elif self.direction == Direction.RIGHT:
-            nowy_x += 1
-
+    def move(self, nowy_x: int, nowy_y: int, zjedzono_owoc: bool = False):
+        """Przemieszcza węża na współrzędne podane bezpośrednio z silnika gry."""
         self.body.insert(0, Segment(nowy_x, nowy_y))
-        self.body.pop()
-
-    def grow(self, bonus_predkosci: int = 1):
-        nowy_x, nowy_y = self.glowa.x, self.glowa.y
-
-        if self.direction == Direction.UP:
-            nowy_y -= 1
-        elif self.direction == Direction.DOWN:
-            nowy_y += 1
-        elif self.direction == Direction.LEFT:
-            nowy_x -= 1
-        elif self.direction == Direction.RIGHT:
-            nowy_x += 1
-
-        self.body.insert(0, Segment(nowy_x, nowy_y))
-        self.score += 1
-        if self.boostActive:
-            self.speed += bonus_predkosci
+        
+        if zjedzono_owoc:
+            self.score += 1
+            
+        else:
+            self.body.pop() 
+        
 
     def zmien_kierunek(self, nowy_kierunek: Direction):
         if nowy_kierunek == Direction.UP and self.direction != Direction.DOWN:
@@ -94,6 +75,16 @@ class Snake:
             self.direction = nowy_kierunek
         elif nowy_kierunek == Direction.RIGHT and self.direction != Direction.LEFT:
             self.direction = nowy_kierunek
+    
+    def ręczne_przyspieszenie(self):
+        """Przełącza stan ręcznego przyspieszenia."""
+        self.manualBoost = not self.manualBoost
+
+    def resetuj_przyspieszenia(self):
+        """Wyłącza wszystkie efekty przyspieszenia (np. po zjedzeniu owocu)."""
+        self.manualBoost = False
+        self.boostActive = False
+        self.boostDuration = 0
 
     def checkSelfHit(self) -> bool:
         return self.glowa in self.body[1:]
@@ -112,12 +103,24 @@ class InputHandler:
             1: STEROWANIE_G1,        
             2: STEROWANIE_G2
         }
+        self.przyspieszenie_klawisze = {
+            Qt.Key_Q: 1,          
+            Qt.Key_Space: 2       
+        }
 
     def readAndSendInput(self, event_key, snakes: list):
+        if event_key in self.przyspieszenie_klawisze:
+            p_id = self.przyspieszenie_klawisze[event_key]
+            for waz in snakes:
+                if waz.playerId == p_id:
+                    waz.ręczne_przyspieszenie()
+                    return True
+
         for player_id, klawisze in self.uklady.items():
             if event_key in klawisze:
                 nowy_kierunek = klawisze[event_key]
                 for waz in snakes:
                     if waz.playerId == player_id:
                         waz.zmien_kierunek(nowy_kierunek)
-                        return
+                        return True
+        return False
