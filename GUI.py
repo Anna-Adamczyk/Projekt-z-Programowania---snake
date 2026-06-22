@@ -107,10 +107,34 @@ class GameCanvas(QWidget):
             elif waz.direction == Direction.RIGHT: nastepny_x += 1
 
             if self.parent.wall_pass:
-                if nastepny_x < 0: nastepny_x = self.board.width - 1
-                elif nastepny_x >= self.board.width: nastepny_x = 0
-                if nastepny_y < 0: nastepny_y = self.board.height - 1
-                elif nastepny_y >= self.board.height: nastepny_y = 0
+                sprawdz_x, sprawdz_y = nastepny_x, nastepny_y
+                
+                przekracza_granice = False
+    
+                if nastepny_x < 0: 
+                    sprawdz_x = self.board.width - 1
+                    przekracza_granice = True
+                elif nastepny_x >= self.board.width: 
+                    sprawdz_x = 0
+                    przekracza_granice = True
+                    
+                if nastepny_y < 0: 
+                    sprawdz_y = self.board.height - 1
+                    przekracza_granice = True
+                elif nastepny_y >= self.board.height: 
+                    sprawdz_y = 0
+                    przekracza_granice = True
+
+                if przekracza_granice:
+                    # Sprawdzamy czy to pole jest wewnętrzną przeszkodą (niebędącą brzegiem)
+                    jest_wewnetrzna_sciana = (
+                        self.board.is_obstacle(sprawdz_x, sprawdz_y) and 
+                        sprawdz_x > 0 and sprawdz_x < self.board.width - 1 and 
+                        sprawdz_y > 0 and sprawdz_y < self.board.height - 1
+                    )
+                    
+                    if not jest_wewnetrzna_sciana:
+                        nastepny_x, nastepny_y = sprawdz_x, sprawdz_y
 
             pozycja_nastepna = (nastepny_x, nastepny_y)
             zwykly_zjedzony = (pozycja_nastepna == self.food.getPosition())
@@ -151,24 +175,33 @@ class GameCanvas(QWidget):
         """Sprawdza czy doszło do zderzenia."""
         for waz in self.snakes:
             glowa = waz.glowa
-            
+
+            # kolizja z fizycznymi granicami ekranu
             if not self.parent.wall_pass:
                 if glowa.x < 0 or glowa.x >= self.board.width or glowa.y < 0 or glowa.y >= self.board.height:
                     self.endGame(przegrany_id=waz.playerId)
                     return
 
-                if self.board.is_obstacle(glowa.x, glowa.y):
-                    is_food = (glowa.x, glowa.y) == self.food.getPosition()
-                    is_magic = self.magic_fruit and (glowa.x, glowa.y) == self.magic_fruit.getPosition()
-                    
-                    if not (is_food or is_magic):
+            # kolizja z zarejestrowanymi przeszkodami 
+            if self.board.is_obstacle(glowa.x, glowa.y):
+                if self.parent.wall_pass:
+                    jest_wewnetrzna_sciana = (
+                        glowa.x > 0 and glowa.x < self.board.width - 1 and 
+                        glowa.y > 0 and glowa.y < self.board.height - 1
+                    )
+                    if jest_wewnetrzna_sciana:
                         self.endGame(przegrany_id=waz.playerId)
                         return
-             
+                else:
+                    self.endGame(przegrany_id=waz.playerId)
+                    return
+         
+            # samozderzenie
             if waz.checkSelfHit():
                 self.endGame(przegrany_id=waz.playerId)
                 return
 
+            # zderzenie z drugim graczem
             for inny_waz in self.snakes:
                 if waz == inny_waz:
                     continue
