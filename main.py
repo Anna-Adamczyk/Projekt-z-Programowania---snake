@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication
 from GUI import SnakeApp
 
 
-def main():
+def main() -> None:
     """Uruchamia aplikację Snake."""
     app = QApplication(sys.argv)
 

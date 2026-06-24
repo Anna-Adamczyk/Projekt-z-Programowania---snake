@@ -32,7 +32,7 @@ class GameCanvas(QWidget):
         self.magic_fruit = None
         self.normal_speed = 150
 
-    def get_tile_widget(self, x, y):
+    def get_tile_widget(self, x: int, y: int) -> QLabel | None:
         """Pobiera konkretny widżet kafelka QLabel z układu siatki (QGridLayout)."""
         layout = self.layout()
         if layout:
