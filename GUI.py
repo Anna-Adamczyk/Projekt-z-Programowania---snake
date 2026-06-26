@@ -1,4 +1,5 @@
 import random
+from typing import List, Tuple, Dict, Any, Optional
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QPushButton,
     QVBoxLayout, QComboBox, QCheckBox,
@@ -14,7 +15,7 @@ from fruit import Food, MagicFruit
 class GameCanvas(QWidget):
     """"Obsługa gry (planszy, węży, owoców, ulepszeń)"""
 
-    def __init__(self, parent):
+    def __init__(self, parent: 'SnakeApp') -> None:
         super().__init__()
         self.parent = parent
         self.setFixedSize(650, 420)
@@ -32,7 +33,7 @@ class GameCanvas(QWidget):
         self.magic_fruit = None
         self.normal_speed = 150
 
-    def get_tile_widget(self, x: int, y: int) -> QLabel | None:
+    def get_tile_widget(self, x: int, y: int) -> Optional[QLabel]:
         """Pobiera konkretny widżet kafelka QLabel z układu siatki (QGridLayout)."""
         layout = self.layout()
         if layout:
@@ -41,7 +42,7 @@ class GameCanvas(QWidget):
                 return item.widget()
         return None
 
-    def startGame(self):
+    def startGame(self) -> None:
         """Rozpoczyna grę."""
         wyksztalt = BoardShape[self.parent.chosen_board]
         self.difficulty = Difficulty(level=1, snake_speed=150, board_shape=wyksztalt)
@@ -83,12 +84,12 @@ class GameCanvas(QWidget):
         self.timer.start(self.normal_speed)
         self.setFocus()
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: Any) -> None:
         """Odpowiada za obsługę ruchu."""
         klawisz = event.key()
         self.input_handler.readAndSendInput(klawisz, self.snakes)
 
-    def game_loop(self):
+    def game_loop(self) -> None:
         """Wykonuje raz główną pętlę gry."""
         if not self.snakes:
             return
@@ -106,7 +107,7 @@ class GameCanvas(QWidget):
             elif waz.direction == Direction.LEFT: nastepny_x -= 1
             elif waz.direction == Direction.RIGHT: nastepny_x += 1
 
-            if self.parent.wall_pass:
+            if self.parent.wall_pass and self.board:
                 sprawdz_x, sprawdz_y = nastepny_x, nastepny_y
                 
                 przekracza_granice = False
@@ -129,16 +130,16 @@ class GameCanvas(QWidget):
                     # Sprawdzamy czy to pole jest wewnętrzną przeszkodą (niebędącą brzegiem)
                     jest_wewnetrzna_sciana = (
                         self.board.is_obstacle(sprawdz_x, sprawdz_y) and 
-                        sprawdz_x > 0 and sprawdz_x < self.board.width - 1 and 
-                        sprawdz_y > 0 and sprawdz_y < self.board.height - 1
+                        0 < sprawdz_x < self.board.width - 1 and 
+                        0 < sprawdz_y < self.board.height - 1
                     )
                     
                     if not jest_wewnetrzna_sciana:
                         nastepny_x, nastepny_y = sprawdz_x, sprawdz_y
 
             pozycja_nastepna = (nastepny_x, nastepny_y)
-            zwykly_zjedzony = (pozycja_nastepna == self.food.getPosition())
-            magiczny_zjedzony = (self.magic_fruit and pozycja_nastepna == self.magic_fruit.getPosition())
+            zwykly_zjedzony = bool(self.food and pozycja_nastepna == self.food.getPosition())
+            magiczny_zjedzony = bool(self.magic_fruit and pozycja_nastepna == self.magic_fruit.getPosition())
 
             # Ruch węża
             waz.move(
@@ -147,11 +148,11 @@ class GameCanvas(QWidget):
                 zjedzono_owoc=(zwykly_zjedzony or magiczny_zjedzony)
             )
             
-            if zwykly_zjedzony:
+            if zwykly_zjedzony and self.food and self.board:
                 waz.resetuj_przyspieszenia()  
                 self.food.spawn(self.board)
                 
-            if magiczny_zjedzony:
+            if magiczny_zjedzony and self.magic_fruit and self.board:
                 waz.resetuj_przyspieszenia()  
                 self.magic_fruit.applyEffect(waz)
                 waz.score += 2 
@@ -167,12 +168,15 @@ class GameCanvas(QWidget):
         
         if len(self.snakes) == 2:
             self.parent.hud.setText(f"G1 SCORE: {self.snakes[0].score} |  G2 SCORE: {self.snakes[1].score}")
-        else:
+        elif len(self.snakes) == 1:
             turbo_info = " [TURBO]" if self.snakes[0].manualBoost or self.snakes[0].boostActive else ""
             self.parent.hud.setText(f"SCORE: {self.snakes[0].score}{turbo_info}")
 
-    def checkCollision(self):
+    def checkCollision(self) -> None:
         """Sprawdza czy doszło do zderzenia."""
+        if not self.board:
+            return
+
         for waz in self.snakes:
             glowa = waz.glowa
 
@@ -186,8 +190,8 @@ class GameCanvas(QWidget):
             if self.board.is_obstacle(glowa.x, glowa.y):
                 if self.parent.wall_pass:
                     jest_wewnetrzna_sciana = (
-                        glowa.x > 0 and glowa.x < self.board.width - 1 and 
-                        glowa.y > 0 and glowa.y < self.board.height - 1
+                        0 < glowa.x < self.board.width - 1 and 
+                        0 < glowa.y < self.board.height - 1
                     )
                     if jest_wewnetrzna_sciana:
                         self.endGame(przegrany_id=waz.playerId)
@@ -209,8 +213,11 @@ class GameCanvas(QWidget):
                     self.endGame(przegrany_id=waz.playerId)
                     return
 
-    def render_game(self):
+    def render_game(self) -> None:
         """Dynamicznie aktualizuje kolory na kafelkach wygenerowanych przez board.py."""
+        if not self.board:
+            return
+
         theme = self.parent.get_theme()
         matrix = self.board.drawBoard()
         
@@ -225,10 +232,11 @@ class GameCanvas(QWidget):
                     else:
                         tile.setStyleSheet(f"background-color: {theme['bg']}; border: 1px solid rgba(0, 0, 0, 0.4);")
 
-        fx, fy = self.food.getPosition()
-        tile_food = self.get_tile_widget(fx, fy)
-        if tile_food:
-            tile_food.setStyleSheet(f"background-color: {theme['food']}; border-radius: 5px;")
+        if self.food:
+            fx, fy = self.food.getPosition()
+            tile_food = self.get_tile_widget(fx, fy)
+            if tile_food:
+                tile_food.setStyleSheet(f"background-color: {theme['food']}; border-radius: 5px;")
 
         if self.magic_fruit:
             mx, my = self.magic_fruit.getPosition()
@@ -250,10 +258,11 @@ class GameCanvas(QWidget):
                     else:
                         tile_seg.setStyleSheet(f"background-color: {kolor_weza};")
 
-    def endGame(self, przegrany_id=1):
+    def endGame(self, przegrany_id: int = 1) -> None:
         """Kończy rozgrywkę."""
         self.timer.stop()
         
+        tekst = ""
         if len(self.snakes) == 2:
             wygrany_id = 2 if przegrany_id == self.snakes[0].playerId else 1
             tekst = f"🏆 WYGRYWA GRACZ {wygrany_id}! 🏆\n\nGratulacje dla zwycięzcy!"
@@ -275,7 +284,7 @@ class GameCanvas(QWidget):
         box.setStyleSheet(szablon_baneru)
         
         btn_restart = QPushButton("Zagraj ponownie")
-        btn_menu = QPushButton("Powrót do menu")  # Naprawiono tekst przycisku wyjścia
+        btn_menu = QPushButton("Powrót do menu")
         
         box.addButton(btn_restart, QMessageBox.AcceptRole)
         box.addButton(btn_menu, QMessageBox.RejectRole)
@@ -292,7 +301,7 @@ class GameCanvas(QWidget):
 class SnakeApp(QWidget):
     """Główne okno aplikacji Snake."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.setWindowTitle("🐍 Snake - Wersja z ulepszeniami")
@@ -307,6 +316,16 @@ class SnakeApp(QWidget):
         self.chosen_board = "ARENA"
         self.control_p1 = "Litery (WASD)"
 
+        # Pola interfejsu
+        self.multi_cb = None
+        self.magic_cb = None
+        self.wall_cb = None
+        self.p1_box = None
+        self.board_box = None
+        self.skin_box = None
+        self.hud = None
+        self.canvas = None
+
         self.stack = QStackedLayout()
         self.setLayout(self.stack)
 
@@ -317,7 +336,7 @@ class SnakeApp(QWidget):
 
         self.stack.setCurrentIndex(0)
 
-    def get_theme(self):
+    def get_theme(self) -> Dict[str, str]:
         """Ustala wariant kolorystyczny rozgrywki."""
         if self.skin == "Neon":
             return {
@@ -344,7 +363,7 @@ class SnakeApp(QWidget):
         }
 
     # ================= MENU =================
-    def menu_ui(self):
+    def menu_ui(self) -> None:
         page = QWidget()
         layout = QVBoxLayout()
         layout.setSpacing(4)  # Zmniejsza globalny odstęp między elementami w menu
@@ -389,7 +408,6 @@ class SnakeApp(QWidget):
         self.skin_box.addItems(["Neon", "Fire", "Ice"])
         layout.addWidget(self.skin_box)
 
-    
         for box in [self.p1_box, self.board_box, self.skin_box]:
             box.setStyleSheet("background:#21262d; color:white; padding:4px; border-radius:6px; margin:0px;")
 
@@ -416,7 +434,7 @@ class SnakeApp(QWidget):
         self.stack.addWidget(page)
 
     # ================= GAME =================
-    def game_ui(self):
+    def game_ui(self) -> None:
         page = QWidget()
         layout = QVBoxLayout()
 
@@ -437,7 +455,7 @@ class SnakeApp(QWidget):
         self.stack.addWidget(page)
 
     # ================= INFO =================
-    def info_ui(self):
+    def info_ui(self) -> None:
         page = QWidget()
         layout = QVBoxLayout()
 
@@ -470,7 +488,7 @@ class SnakeApp(QWidget):
         self.stack.addWidget(page)
 
     # ================= AUTHORS =================
-    def authors_ui(self):
+    def authors_ui(self) -> None:
         page = QWidget()
         layout = QVBoxLayout()
 
@@ -499,13 +517,15 @@ class SnakeApp(QWidget):
         self.stack.addWidget(page)
 
     # ================= START GAME =================
-    def start_game(self):
-        self.multi = self.multi_cb.isChecked()
-        self.magic = self.magic_cb.isChecked()
-        self.wall_pass = self.wall_cb.isChecked()
-        self.skin = self.skin_box.currentText()
-        self.chosen_board = self.board_box.currentText()
-        self.control_p1 = self.p1_box.currentText()
+    def start_game(self) -> None:
+        if self.multi_cb and self.magic_cb and self.wall_cb and self.skin_box and self.board_box and self.p1_box:
+            self.multi = self.multi_cb.isChecked()
+            self.magic = self.magic_cb.isChecked()
+            self.wall_pass = self.wall_cb.isChecked()
+            self.skin = self.skin_box.currentText()
+            self.chosen_board = self.board_box.currentText()
+            self.control_p1 = self.p1_box.currentText()
 
         self.stack.setCurrentIndex(1)
-        self.canvas.startGame()
+        if self.canvas:
+            self.canvas.startGame()
