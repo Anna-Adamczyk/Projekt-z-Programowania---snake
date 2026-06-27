@@ -273,7 +273,7 @@ class GameCanvas(QWidget):
         szablon_baneru = """
             QMessageBox { background-color: #1c2331; border: 2px solid #2b364a; }
             QLabel { color: #ffffff; font-size: 14px; }
-            QPushButton { background-color: #238636; color: white; font-weight: bold; padding: 6px; border-radius: 5px; min-width: 120px; }
+            QPushButton { background-color: #238636; color: white; font-weight: bold; padding: 6px; border-radius: 5px; min-width: 140px; }
             QPushButton:hover { background-color: #2ea043; }
         """
         
@@ -447,9 +447,9 @@ class SnakeApp(QWidget):
         back.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         back.setStyleSheet("background:#30363d; color:white; padding:8px; border-radius:8px;")
 
-        layout.addWidget(self.hud)
-        layout.addWidget(self.canvas)
-        layout.addWidget(back)
+        layout.addWidget(self.hud, alignment=Qt.AlignCenter)
+        layout.addWidget(self.canvas, alignment=Qt.AlignCenter)
+        layout.addWidget(back, alignment=Qt.AlignCenter)
 
         page.setLayout(layout)
         self.stack.addWidget(page)
