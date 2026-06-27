@@ -219,7 +219,7 @@ class GameCanvas(QWidget):
             return
 
         theme = self.parent.get_theme()
-        matrix = self.board.drawBoard()
+        matrix = self.board.draw_board()
         
         for y in range(self.board.height):
             for x in range(self.board.width):
