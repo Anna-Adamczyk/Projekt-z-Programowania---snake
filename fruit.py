@@ -1,6 +1,9 @@
 from random import randint
+
+
 class Food:
     """Klasa reprezentująca standardowy owoc zwiększający wynik gracza."""
+    
     def __init__(self, x: int = 0, y: int = 0, points: int = 1):
         self.x = x
         self.y = y
@@ -24,13 +27,16 @@ class Food:
 
 class MagicFruit(Food):
     """Specjalny owoc aktywujący przyspieszenie węża."""
-    def __init__(self, x=0, y=0):
+    
+    def __init__(self, x: int = 0, y: int = 0):
         super().__init__(x, y, points=3)
 
         self.boostTime = 3
         self.speedBonus = 2
 
     def applyEffect(self, snake) -> None:
-     """Aktywuje efekt przyspieszenia dla podanego węża."""
-     snake.activateBoost(self.boostTime)
-     snake.speed += self.speedBonus
+        """Aktywuje efekt przyspieszenia dla podanego węża."""
+        snake.activateBoost(self.boostTime)
+        snake.speed += self.speedBonus
+
+     
