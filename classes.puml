@@ -1,0 +1,119 @@
+@startuml classes
+set namespaceSeparator none
+class "Board" as board.Board {
+  height : int
+  obstacles : list[tuple[int, int]]
+  shape
+  width : int
+  clear_board() -> None
+  draw_board() -> list[list[str]]
+  generate_walls(shape: BoardShape) -> None
+  init_display(canvas: QWidget) -> None
+  is_obstacle(x: int, y: int) -> bool
+}
+class "BoardShape" as board.BoardShape {
+  name
+}
+class "Difficulty" as board.Difficulty {
+  board_shape
+  level : int
+  snake_speed : int
+  get_shape() -> BoardShape
+  get_speed() -> int
+}
+class "Direction" as snake.Direction {
+  name
+}
+class "Food" as fruit.Food {
+  points : int
+  x : int
+  y : int
+  getPosition() -> tuple[int, int]
+  spawn(board) -> None
+}
+class "GameCanvas" as GUI.GameCanvas {
+  board : NoneType
+  difficulty : NoneType
+  food : NoneType
+  input_handler
+  magic_fruit : NoneType
+  normal_speed : int
+  parent : str
+  snakes : list
+  timer
+  checkCollision() -> None
+  endGame(przegrany_id: int) -> None
+  game_loop() -> None
+  get_tile_widget(x: int, y: int) -> Optional[QLabel]
+  keyPressEvent(event: Any) -> None
+  render_game() -> None
+  startGame() -> None
+}
+class "InputHandler" as snake.InputHandler {
+  przyspieszenie_klawisze : Dict[int, int]
+  uklady : Dict[int, Dict[int, Direction]]
+  readAndSendInput(event_key: int, snakes: List[Snake]) -> bool
+}
+class "MagicFruit" as fruit.MagicFruit {
+  boostTime : int
+  speedBonus : int
+  applyEffect(snake) -> None
+}
+class "Segment" as snake.Segment {
+  x : int
+  y : int
+  getPosition() -> Tuple[int, int]
+}
+class "Snake" as snake.Snake {
+  body : List[Segment]
+  boostActive : bool
+  boostDuration : int
+  color : str
+  direction
+  glowa : Segment
+  manualBoost : bool
+  playerId : int
+  score : int
+  speed : int
+  activateBoost(duration: int) -> None
+  checkSelfHit() -> bool
+  deactivateBoost() -> None
+  move(nowy_x: int, nowy_y: int, zjedzono_owoc: bool) -> None
+  resetuj_przyspieszenia() -> None
+  ręczne_przyspieszenie() -> None
+  zmien_kierunek(nowy_kierunek: Direction) -> None
+}
+class "SnakeApp" as GUI.SnakeApp {
+  board_box : NoneType
+  canvas : NoneType
+  chosen_board : str
+  control_p1 : str
+  hud : NoneType
+  magic : bool
+  magic_cb : NoneType
+  multi : bool
+  multi_cb : NoneType
+  p1_box : NoneType
+  skin : str
+  skin_box : NoneType
+  stack
+  wall_cb : NoneType
+  wall_pass : bool
+  authors_ui() -> None
+  game_ui() -> None
+  get_theme() -> Dict[str, str]
+  info_ui() -> None
+  menu_ui() -> None
+  start_game() -> None
+}
+fruit.MagicFruit --|> fruit.Food
+snake.Snake --> snake.Direction : direction
+snake.Snake --> snake.Segment : body
+GUI.GameCanvas --* GUI.SnakeApp : canvas
+board.Board --* GUI.GameCanvas : board
+board.Difficulty --* GUI.GameCanvas : difficulty
+fruit.Food --* GUI.GameCanvas : food
+fruit.MagicFruit --* GUI.GameCanvas : magic_fruit
+snake.InputHandler --* GUI.GameCanvas : input_handler
+board.BoardShape --o board.Difficulty : board_shape
+@enduml

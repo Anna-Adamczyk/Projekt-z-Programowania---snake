@@ -1,0 +1,17 @@
+@startuml packages
+set namespaceSeparator none
+package "GUI" as GUI {
+}
+package "board" as board {
+}
+package "fruit" as fruit {
+}
+package "main" as main {
+}
+package "snake" as snake {
+}
+GUI --> board
+GUI --> fruit
+GUI --> snake
+main --> GUI
+@enduml
