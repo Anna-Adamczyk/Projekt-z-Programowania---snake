@@ -24,7 +24,7 @@ pip install -r requirements.txt
 2. Uruchom grę:
 
 ```bash
-python GUI.py
+python main.py
 ```
 
 
