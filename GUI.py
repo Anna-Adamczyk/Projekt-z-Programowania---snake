@@ -472,7 +472,11 @@ class SnakeApp(QWidget):
             🍇 Magiczne owoce = zjedzenie magicznego owocu aktywuje czasowe przyspieszenie
             🌀 Wall Pass = przechodzenie przez ściany i krawędzie
             🎨 3 warianty kolorystyczne (Neon, Fire, Ice)
-            🗺️ 3 kształty planszy (ARENA, RECTANGLE, MAZE)                    
+            🗺️ 3 kształty planszy (ARENA, RECTANGLE, MAZE)  
+
+            ZASADY KOLIZJI:
+            W trybie Singleplayer uważaj na samozderzenia (uderzenie we własny ogon oznacza koniec gry).
+            W trybie Multiplayer nie ma samozderzeń, ale wciąż możesz zderzyć się z ciałem drugiego gracza!                  
 """)
         text.setStyleSheet("color:white; font-size: 15px;")
 
